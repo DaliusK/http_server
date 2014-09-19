@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <netinet/in.h>
@@ -139,14 +140,18 @@ int process_request(FILE *f)
     char pathbuf[4096];
     int len;
 
-    printf("Processing request");
     if (!fgets(buf, sizeof(buf), f))
         return -1;
     printf("URL: %s", buf);
 
     //strtok - tokenizer strtok(NULL, " ") - takes another token
     method = strtok(buf, " ");
-    path = strtok(NULL, " ");
+    char curr_dir[150];
+    char *root;
+    getcwd(curr_dir, 150);
+    root = strcat(curr_dir, "/html");
+    path = strcat(root, strtok(NULL, " "));
+    printf("Path: %s\n", path);
     protocol = strtok(NULL, "\r");
     
     if (!method || !path || !protocol)
@@ -184,9 +189,6 @@ int process_request(FILE *f)
                 fprintf(f, "<h1>Index of %s</h1>\r\n", path);
                 fprintf(f, "<pre>Name\t\t\t\t\tLast Modified\t\t\t\t\tSize\r\n");
                 fprintf(f, "<hr />\r\n");
-                
-                if (len > 1)
-                    fprintf(f, "<a href=\"..\">..</a>\r\n");
 
                 dir = opendir(path);
                 while((de = readdir(dir)) != NULL)
