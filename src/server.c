@@ -139,6 +139,7 @@ int process_request(FILE *f)
     char pathbuf[4096];
     int len;
 
+    printf("Processing request");
     if (!fgets(buf, sizeof(buf), f))
         return -1;
     printf("URL: %s", buf);
@@ -203,11 +204,11 @@ int process_request(FILE *f)
                     fprintf(f, "<a href=\"%s%s\">", de->d_name, S_ISDIR(statbuf.st_mode) ? "/" : "");
                     fprintf(f, "%s%s</a>", de->d_name, S_ISDIR(statbuf.st_mode) ? "/" : "");
                     if (strlen(de->d_name) < 32) 
-                        fprintf(f, "%zu%s", 32 - strlen(de->d_name), "");
+                        fprintf(f, "\t\t\t\t\t%zu%s", 32 - strlen(de->d_name), "");
                     if (S_ISDIR(statbuf.st_mode))
-                        fprintf(f, "%s\r\n", timebuf);
+                        fprintf(f, "\t\t\t\t\t%s\r\n", timebuf);
                     else
-                        fprintf(f, "%s %10zu\r\n", timebuf, statbuf.st_size);
+                        fprintf(f, "\t\t\t\t\t%s %10zu\r\n", timebuf, statbuf.st_size);
                 }
                 closedir(dir);
 
