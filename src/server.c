@@ -13,7 +13,7 @@
 #define SERVER "http_server 0.1"
 #define PROTOCOL "HTTP/1.1"
 #define TIMEFORMAT "%a, %d %b %Y %H:%M:%S GMT"//still viable from 1.0 version
-#define PORT 80
+#define PORT 8080
 typedef struct
 {
     char * extension;
@@ -150,8 +150,8 @@ int process_request(FILE *f)
     char *root;
     getcwd(curr_dir, 150);
     root = strcat(curr_dir, "/html");
-    path = strcat(root, strtok(NULL, " "));
-    printf("Path: %s\n", path);
+    char *relative_path = strtok(NULL, " ");
+    path = strcat(root, relative_path);
     protocol = strtok(NULL, "\r");
     
     if (!method || !path || !protocol)
@@ -186,7 +186,7 @@ int process_request(FILE *f)
                 struct dirent *de;
 
                 send_header(f, 200, "OK", NULL, "text/html", -1, statbuf.st_mtime);
-                fprintf(f, "<h1>Index of %s</h1>\r\n", path);
+                fprintf(f, "<h1>Index of %s</h1>\r\n", relative_path);
                 fprintf(f, "<pre>Name\t\t\t\t\tLast Modified\t\t\t\t\tSize\r\n");
                 fprintf(f, "<hr />\r\n");
 
@@ -233,7 +233,14 @@ int main(int argc, char *argv[])
     sin.sin_family = AF_INET;
     sin.sin_addr.s_addr = INADDR_ANY;
     sin.sin_port = htons(PORT);
-    bind(sock, (struct sockaddr * ) &sin, sizeof(sin));
+
+    if (bind(sock, (struct sockaddr * ) &sin, sizeof(sin)) != 0)
+    {
+        printf("Failed to bind to socket\n");
+        return 1;
+    }
+
+
     listen(sock, 5);
     printf("HTTP server listening on port %d\n", PORT);
 
