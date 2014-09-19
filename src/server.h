@@ -1,3 +1,11 @@
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
 #ifndef SERVER_H_
 #define SERVER_H_
 
