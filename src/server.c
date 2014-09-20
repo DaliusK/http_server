@@ -144,12 +144,81 @@ char* get_root()
     return root;
 }
 
+void set_simple_head(FILE *f, char* title, char* description, char* keywords)
+{
+    fprintf(f, "<head>");
+    fprintf(f, "<meta charset=\"UTF-8\" />");
+    
+    if (description)
+        fprintf(f, "<meta name=\"description\" value=\"%s\" />", description);
+
+    if (keywords)
+        fprintf(f, "<meta name=\"keywords\" value=\"%s\" />", keywords);
+
+    if (title)
+        fprintf(f, "<title>%s</title>", title);
+
+    fprintf(f, "</head>");
+}
+
+void send_directory_listing(FILE *f, struct stat statbuf, char* relative_path, char* path, char pathbuf[])
+{
+    DIR *dir;
+    struct dirent *de;
+
+    send_header(f, 200, "OK", NULL, "text/html", -1, statbuf.st_mtime);
+
+    fprintf(f, "<html>");
+    set_simple_head(f, relative_path, relative_path, NULL);
+    fprintf(f, "<body>");
+    fprintf(f, "<h1>Index of %s</h1>\r\n", relative_path);
+    fprintf(f, "<pre><table border=\"0\">");
+    fprintf(f, "<tr><th>Name</th><th>Last modified</th><th>Size</th></tr>");
+    fprintf(f, "<hr />\r\n");
+
+    dir = opendir(path);
+    while((de = readdir(dir)) != NULL)
+    {
+        char timebuf[32];
+        struct tm *tm;
+
+        strcpy(pathbuf, path);
+        strcat(pathbuf, de->d_name);
+
+        stat(pathbuf, &statbuf);
+        tm = gmtime(&statbuf.st_mtime);
+        strftime(timebuf, sizeof(timebuf), "%Y-%b-%d %H-%M-%S", tm);
+
+        fprintf(f, "<tr>");
+        if (strcmp(de->d_name, ".") == 0)
+            continue;
+
+        //regressive and unecessary to see what's below root
+        if (strcmp(relative_path, "/") == 0 && strcmp(de->d_name, "..") == 0)
+            continue
+
+        fprintf(f, "<td><a href=\"%s%s\">", de->d_name, S_ISDIR(statbuf.st_mode) ? "/" : "");
+        fprintf(f, "%s%s</a></td>", de->d_name, S_ISDIR(statbuf.st_mode) ? "/" : "");
+            
+        if (S_ISDIR(statbuf.st_mode))
+            fprintf(f, "<td>%s</td>", timebuf);
+        else
+            fprintf(f, "<td>%s</td> <td>%10zu</td>", timebuf, statbuf.st_size);
+        fprintf(f, "</tr>");
+    }
+    closedir(dir);
+
+    fprintf(f, "</table></pre>\r\n<hr /><address>%s</address>\r\n", SERVER);
+    fprintf(f, "</body></html>");
+}
+
 int process_request(FILE *f, char *root)
 {
     //TODO: divide into subfunctions
     char buf[4096];
     char *method;
     char *path = malloc(4096 * sizeof(char));
+    char *relative_path;
     char *protocol;
     struct stat statbuf;
     char pathbuf[4096];
@@ -162,11 +231,9 @@ int process_request(FILE *f, char *root)
 
     //strtok - tokenizer strtok(NULL, " ") - takes another token
     method = strtok(buf, " ");
-    char *relative_path = strtok(NULL, " ");
-    printf("Root: %s\n", root);
+    relative_path = strtok(NULL, " ");
     strncpy(path, root, 4096);
     strcat(path, relative_path);
-    printf("Path: %s\n", path);
     protocol = strtok(NULL, "\r");
     
     if (!method || !path || !protocol)
@@ -195,42 +262,7 @@ int process_request(FILE *f, char *root)
             if (stat(pathbuf, &statbuf) >= 0)
                 send_file(f, pathbuf, &statbuf);
             else
-            {
-                //print directory listing
-                DIR *dir;
-                struct dirent *de;
-
-                send_header(f, 200, "OK", NULL, "text/html", -1, statbuf.st_mtime);
-                fprintf(f, "<h1>Index of %s</h1>\r\n", relative_path);
-                fprintf(f, "<pre>Name\t\t\t\t\tLast Modified\t\t\t\t\tSize\r\n");
-                fprintf(f, "<hr />\r\n");
-
-                dir = opendir(path);
-                while((de = readdir(dir)) != NULL)
-                {
-                    char timebuf[32];
-                    struct tm *tm;
-                    
-                    strcpy(pathbuf, path);
-                    strcat(pathbuf, de->d_name);
-
-                    stat(pathbuf, &statbuf);
-                    tm = gmtime(&statbuf.st_mtime);
-                    strftime(timebuf, sizeof(timebuf), "%Y-%b-%d %H-%M-%S", tm);
-
-                    fprintf(f, "<a href=\"%s%s\">", de->d_name, S_ISDIR(statbuf.st_mode) ? "/" : "");
-                    fprintf(f, "%s%s</a>", de->d_name, S_ISDIR(statbuf.st_mode) ? "/" : "");
-                    if (strlen(de->d_name) < 32) 
-                        fprintf(f, "\t\t\t\t\t%zu%s", 32 - strlen(de->d_name), "");
-                    if (S_ISDIR(statbuf.st_mode))
-                        fprintf(f, "\t\t\t\t\t%s\r\n", timebuf);
-                    else
-                        fprintf(f, "\t\t\t\t\t%s %10zu\r\n", timebuf, statbuf.st_size);
-                }
-                closedir(dir);
-
-                fprintf(f, "</pre>\r\n<hr /><address>%s</address>\r\n", SERVER);
-            }
+                send_directory_listing(f, statbuf, relative_path, path, pathbuf);
         }
     }
     else

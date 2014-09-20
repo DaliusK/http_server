@@ -29,6 +29,8 @@ void send_response(FILE *f, int status, char *title, char *extra, char *text);
  */
 void send_file(FILE *f, char *path, struct stat *statbuf);
 
+/** Sets a simple <head> metadata with title
+ */
 /** The main function for processing client's needs
  */
 int process_request(FILE *f, char *root);
