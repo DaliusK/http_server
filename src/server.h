@@ -31,7 +31,7 @@ void send_file(FILE *f, char *path, struct stat *statbuf);
 
 /** The main function for processing client's needs
  */
-int process_request(FILE *f);
+int process_request(FILE *f, char *root);
 
 /** Simple structure for mime
   * NOTE: might need expansion on later development

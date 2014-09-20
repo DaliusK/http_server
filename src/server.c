@@ -2,6 +2,7 @@
 #include "helper.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
@@ -130,15 +131,30 @@ void send_file(FILE *f, char *path, struct stat *statbuf)
     }
 }
 
-int process_request(FILE *f)
+char* get_root()
 {
+    int bufsize = 128;
+    char *buf = malloc(bufsize * sizeof(char));
+    char *subbuf = malloc(bufsize * sizeof(char));
+    get_exec_path(buf, bufsize);
+    int index = lastIndexOf(buf, "/");
+    substr(subbuf, bufsize, buf, index);
+    char *root = strcat(subbuf, "/html");
+    printf("Setting root: %s\n", root);
+    return root;
+}
+
+int process_request(FILE *f, char *root)
+{
+    //TODO: divide into subfunctions
     char buf[4096];
     char *method;
-    char *path;
+    char *path = malloc(4096 * sizeof(char));
     char *protocol;
     struct stat statbuf;
     char pathbuf[4096];
     int len;
+
 
     if (!fgets(buf, sizeof(buf), f))
         return -1;
@@ -146,12 +162,11 @@ int process_request(FILE *f)
 
     //strtok - tokenizer strtok(NULL, " ") - takes another token
     method = strtok(buf, " ");
-    char curr_dir[150];
-    char *root;
-    getcwd(curr_dir, 150);
-    root = strcat(curr_dir, "/html");
     char *relative_path = strtok(NULL, " ");
-    path = strcat(root, relative_path);
+    printf("Root: %s\n", root);
+    strncpy(path, root, 4096);
+    strcat(path, relative_path);
+    printf("Path: %s\n", path);
     protocol = strtok(NULL, "\r");
     
     if (!method || !path || !protocol)
@@ -224,6 +239,21 @@ int process_request(FILE *f)
     return 0;
 }
 
+int loop(int sock, char* root)
+{
+    int s;
+    FILE *f;
+    s = accept(sock, NULL, NULL);
+    if (s < 0)
+        return 1;
+
+    f = fdopen(s, "a+");
+    process_request(f, root);
+    fclose(f);
+
+    return 0;
+}
+
 int main(int argc, char *argv[])
 {
     int sock;
@@ -243,20 +273,13 @@ int main(int argc, char *argv[])
 
     listen(sock, 5);
     printf("HTTP server listening on port %d\n", PORT);
-
-    while (1)
+    char *root = get_root();
+    int loop_result = loop(sock, root);
+    while (loop_result != 1)
     {
-        int s;
-        FILE *f;
-        s = accept(sock, NULL, NULL);
-        if (s < 0)
-            break;
-
-        f = fdopen(s, "a+");
-        process_request(f);
-        fclose(f);
+        loop_result = loop(sock, root);
     }
 
     close(sock);
-    return 0;
+    return loop_result;
 }
