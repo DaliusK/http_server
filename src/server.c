@@ -10,6 +10,7 @@
 #include <dirent.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
 
 #define SERVER "http_server 0.1"
 #define PROTOCOL "HTTP/1.1"
@@ -172,9 +173,9 @@ void send_directory_listing(FILE *f, struct stat statbuf, char* relative_path, c
     set_simple_head(f, relative_path, relative_path, NULL);
     fprintf(f, "<body>");
     fprintf(f, "<h1>Index of %s</h1>\r\n", relative_path);
-    fprintf(f, "<pre><table border=\"0\">");
-    fprintf(f, "<tr><th>Name</th><th>Last modified</th><th>Size</th></tr>");
-    fprintf(f, "<hr />\r\n");
+    fprintf(f, "<pre><table border=\"0\" width=\"100%%\">");
+    fprintf(f, "<tr><th align=\"left\">Name</th><th align=\"left\">Last modified</th><th align=\"left\">Size</th></tr>");
+    fprintf(f, "<hr />\r\n"); 
 
     dir = opendir(path);
     while((de = readdir(dir)) != NULL)
@@ -227,7 +228,7 @@ int process_request(FILE *f, char *root)
 
     if (!fgets(buf, sizeof(buf), f))
         return -1;
-    printf("URL: %s", buf);
+    printf("%s", buf);
 
     //strtok - tokenizer strtok(NULL, " ") - takes another token
     method = strtok(buf, " ");
@@ -275,10 +276,15 @@ int loop(int sock, char* root)
 {
     int s;
     FILE *f;
-    s = accept(sock, NULL, NULL);
+    struct sockaddr_in client;
+    client.sin_family = AF_INET;
+    socklen_t client_len = sizeof(client);
+
+    s = accept(sock, (struct sockaddr*)&client, &client_len);
     if (s < 0)
         return 1;
 
+    printf("%s: ", inet_ntoa(client.sin_addr));
     f = fdopen(s, "a+");
     process_request(f, root);
     fclose(f);
