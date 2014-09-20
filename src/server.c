@@ -195,7 +195,7 @@ void send_directory_listing(FILE *f, struct stat statbuf, char* relative_path, c
 
         //regressive and unecessary to see what's below root
         if (strcmp(relative_path, "/") == 0 && strcmp(de->d_name, "..") == 0)
-            continue
+            continue;
 
         fprintf(f, "<td><a href=\"%s%s\">", de->d_name, S_ISDIR(statbuf.st_mode) ? "/" : "");
         fprintf(f, "%s%s</a></td>", de->d_name, S_ISDIR(statbuf.st_mode) ? "/" : "");
