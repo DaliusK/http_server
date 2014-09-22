@@ -231,7 +231,6 @@ int process_request(FILE *f, char *root)
     struct stat statbuf;
     char pathbuf[4096];
     int len;
-    char *path;
 
     if (!fgets(buf, sizeof(buf), f))
         return -1;
@@ -240,7 +239,7 @@ int process_request(FILE *f, char *root)
     //strtok - tokenizer strtok(NULL, " ") - takes another token
     method = strtok(buf, " ");
     relative_path = strtok(NULL, " ");
-    path = calloc(strlen(root) + strlen(relative_path) + 1, sizeof(char));
+    char *path = calloc(strlen(root) + strlen(relative_path) + 1, sizeof(char));
     
     
     memmove(path, root, strlen(root));
@@ -301,6 +300,7 @@ int process_request(FILE *f, char *root)
     {
         send_response(f, 501, "Not supported", NULL, "Method is not supported");
     }
+    free(path);
     return 0;
 }
 
