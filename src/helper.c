@@ -25,14 +25,13 @@ OS get_os()
     return OTHER_UNIX;
 }
 
-char* get_exec_path(char *buf, int bufsize)
+void get_exec_path(char *buf, int bufsize)
 {
     //guided by http://stackoverflow.com/a/933996/552214
     printf("Get executable's path\n");
     
     readlink("/proc/self/exe", buf, bufsize);
     printf("\tPath: %s\n", buf);
-    return buf;
 }
 
 void substr(char *buffer, size_t buflen, char const *source, int len)
