@@ -233,7 +233,7 @@ int process_request(FILE *f, char *root)
 
     if (!fgets(buf, sizeof(buf), f))
         return -1;
-    printf("noriu %s", buf);
+    printf("%s", buf);
 
     //strtok - tokenizer strtok(NULL, " ") - takes another token
     method = strtok(buf, " ");
