@@ -21,10 +21,6 @@ typedef enum
  */
 OS get_os();
 
-/** Returns executable's directory
- */
-char * get_exec_path();
-
 /*
 ** Given substr(buffer, sizeof(buffer), "string", len), then the output
 ** in buffer for different values of len is:
@@ -61,5 +57,5 @@ int indexOf_shift(char* base, char* str, int startIndex);
  */
 int lastIndexOf(char* base, char* str);
 
-
+void get_exec_path(char *buf, int bufsize);
 #endif
