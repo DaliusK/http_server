@@ -135,7 +135,7 @@ void send_response(FILE *f, int status, char *title, char *extra, char *text)
 
 void send_file(FILE *f, char *path, struct stat *statbuf)
 {
-    char data[4096];
+    char data[1024];
     int n;
 
     FILE *file = fopen(path, "r");
@@ -155,16 +155,15 @@ void send_file(FILE *f, char *path, struct stat *statbuf)
 
 char* get_root()
 {
-    int bufsize = 128;
-    char *buf = malloc(bufsize * sizeof(char));
-    char *subbuf = malloc(bufsize * sizeof(char));
+    int bufsize = 1023;
+    char *buf = calloc(bufsize, sizeof(char));
+    char *root = calloc(bufsize, sizeof(char));
     get_exec_path(buf, bufsize);
     int index = lastIndexOf(buf, "/");
-    substr(subbuf, bufsize, buf, index);
-    char *root = strcat(subbuf, "/html");
+    substr(root, bufsize, buf, index);
+    strcat(root, "/html");
     printf("Setting root: %s\n", root);
     free(buf);
-    free(subbuf);
     return root;
 }
 
@@ -172,7 +171,6 @@ void send_directory_listing(FILE *f, struct stat statbuf, char* relative_path, c
 {
     DIR *dir;
     struct dirent *de;
-    char pathbuf[4096];
 
     send_header(f, 200, "OK", NULL, "text/html", -1, statbuf.st_mtime);
 
@@ -190,7 +188,9 @@ void send_directory_listing(FILE *f, struct stat statbuf, char* relative_path, c
         char timebuf[32];
         struct tm *tm;
 
-        strcpy(pathbuf, path);
+        char *pathbuf = calloc(strlen(path) + 128, sizeof(char));
+        memcpy(pathbuf, path, strlen(path));
+        pathbuf[strlen(pathbuf)] = '\0';
         strcat(pathbuf, de->d_name);
 
         stat(pathbuf, &statbuf);
@@ -213,9 +213,9 @@ void send_directory_listing(FILE *f, struct stat statbuf, char* relative_path, c
         else
             fprintf(f, "<td>%s</td> <td>%10zu</td>", timebuf, statbuf.st_size);
         fprintf(f, "</tr>");
+        free(pathbuf);
     }
     closedir(dir);
-
     fprintf(f, "</table></pre>\r\n<hr /><address>%s</address>\r\n", SERVER);
     fprintf(f, "</body></html>");
 }
@@ -223,15 +223,15 @@ void send_directory_listing(FILE *f, struct stat statbuf, char* relative_path, c
 int process_request(FILE *f, char *root)
 {
     //TODO: divide into subfunctions
-    char buf[4096];
+    char buf[1024];
     char *method;
-    char *path = malloc(4096 * sizeof(char));
+    
     char *relative_path;
     char *protocol;
     struct stat statbuf;
     char pathbuf[4096];
     int len;
-
+    char *path;
 
     if (!fgets(buf, sizeof(buf), f))
         return -1;
@@ -240,12 +240,15 @@ int process_request(FILE *f, char *root)
     //strtok - tokenizer strtok(NULL, " ") - takes another token
     method = strtok(buf, " ");
     relative_path = strtok(NULL, " ");
-    strncpy(path, root, 4095);
-    path[4095] = '\0';//strncpy does not give a null terminator
+    path = calloc(strlen(root) + strlen(relative_path) + 1, sizeof(char));
+    
+    
+    memmove(path, root, strlen(root));
+    path[strlen(root) + 1] = '\0';
     strcat(path, relative_path);
     protocol = strtok(NULL, "\r");
     
-    if (!method || !path || !protocol)
+    if (!method || !relative_path || !protocol)
         return -1;
 
     fseek(f, 0, SEEK_CUR); //change stream direction
@@ -298,7 +301,6 @@ int process_request(FILE *f, char *root)
     {
         send_response(f, 501, "Not supported", NULL, "Method is not supported");
     }
-    free(path);
     return 0;
 }
 
@@ -318,7 +320,6 @@ int loop(int sock, char* root)
     f = fdopen(s, "a+");
     process_request(f, root);
     fclose(f);
-
     return 0;
 }
 
@@ -347,7 +348,7 @@ int main(int argc, char *argv[])
     {
         loop_result = loop(sock, root);
     }
-
+    free(root);
     close(sock);
     return loop_result;
 }
