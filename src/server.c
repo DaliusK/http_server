@@ -163,6 +163,8 @@ char* get_root()
     substr(subbuf, bufsize, buf, index);
     char *root = strcat(subbuf, "/html");
     printf("Setting root: %s\n", root);
+    free(buf);
+    free(subbuf);
     return root;
 }
 
@@ -295,6 +297,7 @@ int process_request(FILE *f, char *root)
     {
         send_response(f, 501, "Not supported", NULL, "Method is not supported");
     }
+    free(path);
     return 0;
 }
 
