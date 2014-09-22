@@ -4,7 +4,7 @@
 TARGET = http_server
 
 CC = gcc
-CFLAGS = -Wall -I.
+CFLAGS = -Wall -I. -ggdb
 LINKER = gcc -o
 LFLAGS = -Wall -I. -lm
 SRCDIR = src
