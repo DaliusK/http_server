@@ -29,11 +29,23 @@ void send_response(FILE *f, int status, char *title, char *extra, char *text);
  */
 void send_file(FILE *f, char *path, struct stat *statbuf);
 
+/** Send directory listing
+ */
+void send_directory_listing(FILE *f, struct stat statbuf, char* relative_path, char* path);
 /** Sets a simple <head> metadata with title
  */
+void set_simple_head(FILE *f, char* title, char* description, char* keywords);
 /** The main function for processing client's needs
  */
 int process_request(FILE *f, char *root);
+
+/** Gets the root for server to work on
+ */
+char* get_root();
+
+/** a function for looping to accept requests from users and process them
+ */
+int loop(int sock, char* root);
 
 /** Simple structure for mime
   * NOTE: might need expansion on later development
