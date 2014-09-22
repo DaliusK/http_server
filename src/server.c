@@ -240,7 +240,8 @@ int process_request(FILE *f, char *root)
     //strtok - tokenizer strtok(NULL, " ") - takes another token
     method = strtok(buf, " ");
     relative_path = strtok(NULL, " ");
-    strncpy(path, root, 4096);
+    strncpy(path, root, 4095);
+    path[4095] = '\0';//strncpy does not give a null terminator
     strcat(path, relative_path);
     protocol = strtok(NULL, "\r");
     
