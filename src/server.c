@@ -68,6 +68,23 @@ char *get_mimetype_by_ext(char **ext)
     return NULL;
 }
 
+void set_simple_head(FILE *f, char* title, char* description, char* keywords)
+{
+    fprintf(f, "<head>");
+    fprintf(f, "<meta charset=\"UTF-8\" />");
+    
+    if (description)
+        fprintf(f, "<meta name=\"description\" value=\"%s\" />", description);
+
+    if (keywords)
+        fprintf(f, "<meta name=\"keywords\" value=\"%s\" />", keywords);
+
+    if (title)
+        fprintf(f, "<title>%s</title>", title);
+
+    fprintf(f, "</head>");
+}
+
 void send_header(FILE *f, int status, char *title, char *extra, char *mime, int length, time_t date)
 {
     time_t now;
@@ -108,8 +125,12 @@ void send_header(FILE *f, int status, char *title, char *extra, char *mime, int 
 void send_response(FILE *f, int status, char *title, char *extra, char *text)
 {
     send_header(f, status, title, extra, "text/html", -1, -1);
+    fprintf(f, "<html>");
+    set_simple_head(f, title, text, NULL);
+    fprintf(f, "<body>");
     fprintf(f, "<h1>%d - %s</h1>", status, title);//naughty HTML
     fprintf(f, "<p>%s\r\n</p>", text);
+    fprintf(f, "</body></html>");
 }
 
 void send_file(FILE *f, char *path, struct stat *statbuf)
@@ -145,27 +166,11 @@ char* get_root()
     return root;
 }
 
-void set_simple_head(FILE *f, char* title, char* description, char* keywords)
-{
-    fprintf(f, "<head>");
-    fprintf(f, "<meta charset=\"UTF-8\" />");
-    
-    if (description)
-        fprintf(f, "<meta name=\"description\" value=\"%s\" />", description);
-
-    if (keywords)
-        fprintf(f, "<meta name=\"keywords\" value=\"%s\" />", keywords);
-
-    if (title)
-        fprintf(f, "<title>%s</title>", title);
-
-    fprintf(f, "</head>");
-}
-
-void send_directory_listing(FILE *f, struct stat statbuf, char* relative_path, char* path, char pathbuf[])
+void send_directory_listing(FILE *f, struct stat statbuf, char* relative_path, char* path)
 {
     DIR *dir;
     struct dirent *de;
+    char pathbuf[4096];
 
     send_header(f, 200, "OK", NULL, "text/html", -1, statbuf.st_mtime);
 
@@ -228,7 +233,7 @@ int process_request(FILE *f, char *root)
 
     if (!fgets(buf, sizeof(buf), f))
         return -1;
-    printf("%s", buf);
+    printf("noriu %s", buf);
 
     //strtok - tokenizer strtok(NULL, " ") - takes another token
     method = strtok(buf, " ");
@@ -242,33 +247,54 @@ int process_request(FILE *f, char *root)
 
     fseek(f, 0, SEEK_CUR); //change stream direction
 
-    if (strcasecmp(method, "GET") != 0)
-    {
-        //currently only GET is supported
-        send_response(f, 501, "Not supported", NULL, "Method is not supported");
-    }else if (stat(path, &statbuf) < 0)
-    {
-        send_response(f, 404, "Not found", NULL, "File not found");
-    }else if (S_ISDIR(statbuf.st_mode))
-    {
-        len = strlen(path);
 
-        if (len == 0 || path[len -1] != '/')
+    if (strcasecmp(method, "GET") == 0)
+    {
+        /* Check if path exists */
+        if (stat(path, &statbuf) >= 0)
         {
-            snprintf(pathbuf, sizeof(pathbuf), "Location: %s/", path);
-            send_response(f, 302, "Found", pathbuf, "Directories must end with a slash.");
-        }else
-        {
-            snprintf(pathbuf, sizeof(pathbuf), "%sindex.html", path);
-            if (stat(pathbuf, &statbuf) >= 0)
-                send_file(f, pathbuf, &statbuf);
+            /* Check if it is a directory*/
+            if (S_ISDIR(statbuf.st_mode))
+            {
+                len = strlen(path);
+
+                /* Check for directory compliance */
+                if (len == 0 || path[len - 1] != '/')
+                {
+                    //HTTP 302 requires a Location in headers to be sent back
+                    snprintf(pathbuf, sizeof(pathbuf), "Location: %s/", relative_path);
+                    printf("HTTP 302, %s\n", pathbuf);
+                    send_response(f, 302, "Found", pathbuf, "Directories must end with a slash.");
+                }
+                else
+                {
+                    /* Show index.html or directory listing on directory request*/
+                    snprintf(pathbuf, sizeof(pathbuf), "%sindex.html", path);
+                    
+                    if (stat(pathbuf, &statbuf) >= 0)
+                    {
+                        send_file(f, pathbuf, &statbuf);
+                    }
+                    else
+                    {
+                        send_directory_listing(f, statbuf, relative_path, path);
+                    }
+                }
+            }
             else
-                send_directory_listing(f, statbuf, relative_path, path, pathbuf);
+            {
+                send_file(f, path, &statbuf);
+            }
+        }
+        else
+        {
+            send_response(f, 404, "Not found", NULL, "File not found");
         }
     }
     else
-        send_file(f, path, &statbuf);
-
+    {
+        send_response(f, 501, "Not supported", NULL, "Method is not supported");
+    }
     return 0;
 }
 
