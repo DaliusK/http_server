@@ -1,7 +1,32 @@
 #include "helper.h"
+#include <stdlib.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <unistd.h>
+
+typedef struct
+{
+    char * extension;
+    char * type;
+} mime;
+
+
+mime mimes[] =
+{
+    {".html", "text/html"},
+    {".htm",  "text/html"},
+    {".css",  "text/css"},
+    {".js",   "text/javascript"},
+    {".jpg",  "image/jpeg"},
+    {".jpeg", "image/jpeg"},
+    {".png",  "image/png"},
+    {".gif",  "imag/gif"},
+    {".wav",  "audio/wav"},
+    {".mp3",  "audio/mpeg"},
+    {".avi",  "video/x-msvideo"},
+    {".mpg",  "video/mpeg"},
+    {".mpeg", "video/mpeg"}
+};
 
 void to_lowercase(char *string)
 {
@@ -134,4 +159,64 @@ int lastIndexOf(char* base, char* str)
         result = start;
     }
     return result;
+}
+
+char *get_mimetype_by_name(char *name)
+{
+    char *extension = strrchr(name, '.');
+
+    //check if extension even exists
+    if (!extension)
+        return NULL;
+
+    return get_mimetype_by_ext(&extension);
+}
+
+char *get_mimetype_by_ext(char **ext)
+{
+
+    char *extension = *ext;//local copy
+    to_lowercase(extension);
+
+    int i;
+    for (i = 0; i < sizeof(mimes) / sizeof(mime); i++)
+    {
+        if (strcmp(mimes[i].extension, extension) == 0)
+        {
+            return mimes[i].type;
+        }
+    }
+    //nothing found - return NULL
+    return NULL;
+}
+
+void decode_url(char *src, int srclen, char *dest)
+{
+    int i;
+    char *str = src;
+    for (i = 0; i < srclen; i++, str++, dest++)
+    {
+        if (*str == '+')
+        {
+            *dest = ' ';
+        }
+        else if (*str == '%')
+        {
+            int code;
+            //match two numbers into code. There should be one match
+            if (sscanf(str+1, "%2x", &code) != 1)
+            {
+                //don't know what the hell this is - use ?
+                code = '?';
+            }//else - normal code is retrieved
+            *dest = code;
+            str += 2;//skip forward by 2 hex numbers
+        }
+        else
+        {
+            *dest = *str;
+        }
+    }
+    *dest = '\n';
+    *++dest = '\0';
 }
