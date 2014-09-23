@@ -17,55 +17,6 @@
 #define PROTOCOL "HTTP/1.1"
 #define TIMEFORMAT "%a, %d %b %Y %H:%M:%S GMT"//still viable from 1.0 version
 
-typedef struct
-{
-    char * extension;
-    char * type;
-} mimes[] =
-{
-    {".html", "text/html"},
-    {".htm",  "text/html"},
-    {".css",  "text/css"},
-    {".js",   "text/javascript"},
-    {".jpg",  "image/jpeg"},
-    {".jpeg", "image/jpeg"},
-    {".png",  "image/png"},
-    {".gif",  "imag/gif"},
-    {".wav",  "audio/wav"},
-    {".mp3",  "audio/mpeg"},
-    {".avi",  "video/x-msvideo"},
-    {".mpg",  "video/mpeg"},
-    {".mpeg", "video/mpeg"}
-};
-
-char *get_mimetype_by_name(char *name)
-{
-    char *extension = strrchr(name, '.');
-
-    //check if extension even exists
-    if (!extension)
-        return NULL;
-
-    return get_mimetype_by_ext(&extension);
-}
-
-char *get_mimetype_by_ext(char **ext)
-{
-
-    char *extension = *ext;//local copy
-    to_lowercase(extension);
-
-    int i;
-    for (i = 0; i < sizeof(mimes) / sizeof(mime); i++)
-    {
-        if (strcmp(mimes[i].extension, extension) == 0)
-        {
-            return mimes[i].type;
-        }
-    }
-    //nothing found - return NULL
-    return NULL;
-}
 
 void set_simple_head(FILE *f, char* title, char* description, char* keywords)
 {
