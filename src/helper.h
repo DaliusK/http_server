@@ -2,6 +2,20 @@
 #define HELPER_H_
 
 #include <string.h>
+
+/** Deduces mime type by file name
+ */
+char *get_mimetype_by_name(char *name);
+
+/** Deduces mime type by file extension
+ */
+char *get_mimetype_by_ext(char **ext);
+
+/** Simple structure for mime
+  * NOTE: might need expansion on later development
+ */
+struct mime;
+
 /** Turns a string into lowercase
  */
 void to_lowercase(char *string);
@@ -57,5 +71,13 @@ int indexOf_shift(char* base, char* str, int startIndex);
  */
 int lastIndexOf(char* base, char* str);
 
+/** Returns executable's path
+ */
 void get_exec_path(char *buf, int bufsize);
+
+/** Decodes URL (all these cryptic hex codes)
+ * src string should be given in exactly the url to be decoded
+ */
+void decode_url(char *src, int srclen, char *dest);
+
 #endif
