@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <signal.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <dirent.h>
@@ -333,6 +334,13 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    /* Separate the process and make as a daemon */
+    if (fork() != 0)
+        return 1;//failed to fork
+
+    //ignore some shutdown signals: http://stackoverflow.com/questions/18551485/how-to-make-the-process-ignore-some-signallike-sighup-sigabrt-sigabort-sigint-e
+    signal(SIGHUP, SIG_IGN);//ignore terminal exits
+    signal(SIGCLD, SIG_IGN);//ignore child exits
     int port = atoi(argv[1]);
     int sock;
     struct sockaddr_in sin;
