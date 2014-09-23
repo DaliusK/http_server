@@ -15,7 +15,7 @@
 #define SERVER "http_server 0.1"
 #define PROTOCOL "HTTP/1.1"
 #define TIMEFORMAT "%a, %d %b %Y %H:%M:%S GMT"//still viable from 1.0 version
-#define PORT 8080
+
 typedef struct
 {
     char * extension;
@@ -325,13 +325,22 @@ int loop(int sock, char* root)
 
 int main(int argc, char *argv[])
 {
+    if (argc < 2)
+    {
+        printf("Usage: %s PORT\n", argv[0]);
+        printf("\tPORT - a number which represents the port (1-65535)\n");
+        printf("\t\tusually 80 is for web\n");
+        return 1;
+    }
+
+    int port = atoi(argv[1]);
     int sock;
     struct sockaddr_in sin;
     sock = socket(AF_INET, SOCK_STREAM, 0);
 
     sin.sin_family = AF_INET;
     sin.sin_addr.s_addr = INADDR_ANY;
-    sin.sin_port = htons(PORT);
+    sin.sin_port = htons(port);
 
     if (bind(sock, (struct sockaddr * ) &sin, sizeof(sin)) != 0)
     {
@@ -341,7 +350,7 @@ int main(int argc, char *argv[])
 
 
     listen(sock, 5);
-    printf("HTTP server listening on port %d\n", PORT);
+    printf("HTTP server listening on port %d\n", port);
     char *root = get_root();
     int loop_result = loop(sock, root);
     while (loop_result != 1)
