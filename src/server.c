@@ -21,9 +21,7 @@ typedef struct
 {
     char * extension;
     char * type;
-} mime;
-
-mime mimes[13] =
+} mimes[] =
 {
     {".html", "text/html"},
     {".htm",  "text/html"},
