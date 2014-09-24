@@ -184,7 +184,7 @@ int process_request(FILE *f, char *root)
 
     if (!fgets(buf, sizeof(buf), f))
         return -1;
-    printf("%s", buf);
+    printf("%s\n", buf);
 
     //strtok - tokenizer strtok(NULL, " ") - takes another token
     method = strtok(buf, " ");
