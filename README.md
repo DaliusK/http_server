@@ -7,6 +7,7 @@ Supported operating systems:
  - Linux
 
 For operating system dependencies check [OS_DEPS.md](OS_DEPS.md)
+
 ===========
 ### Supported methods ###
  - GET - simple, without additional querystring
