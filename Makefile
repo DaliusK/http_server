@@ -18,6 +18,8 @@ OBJECTS  := $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
 
 TESTSRC  := $(wildcard $(TESTDIR)/*.c)
 TESTOBJ  := $(TESTSRC:$(TESTDIR)/%.c=$(OBJDIR)/%.o)
+#remove an object that already has a main method
+TESTDEPS := $(filter-out obj/main.o, $(OBJECTS))
 TESTS    := $(TESTSRC:$(TESTDIR)/%.c=$(BINDIR)/%.test)
 rm  = rm -f
 
@@ -27,8 +29,8 @@ $(BINDIR)/$(TARGET): $(OBJECTS)
 $(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.c
 	@$(CC) $(CFLAGS) -c $< -o $@
 
-$(TESTS): $(TESTOBJ)
-	@$(LINKER) $@ $(LFLAGS) $(TESTOBJ)
+$(TESTS): $(TESTOBJ) $(OBJECTS)
+	@$(LINKER) $@ $(LFLAGS) $(TESTOBJ) $(TESTDEPS)
 
 $(TESTOBJ): $(OBJDIR)/%.o : $(TESTDIR)/%.c
 	@$(CC) $(CFLAGS) -c $< -o $@
