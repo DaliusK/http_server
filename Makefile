@@ -21,18 +21,23 @@ TESTOBJ  := $(TESTSRC:$(TESTDIR)/%.c=$(OBJDIR)/%.o)
 #remove an object that already has a main method
 TESTDEPS := $(filter-out obj/main.o, $(OBJECTS))
 TESTS    := $(TESTSRC:$(TESTDIR)/%.c=$(BINDIR)/%.test)
-rm  = rm -f
+rm        = rm -f
+create_dir=@mkdir -p $(@D)
 
 $(BINDIR)/$(TARGET): $(OBJECTS)
+	$(create_dir)
 	@$(LINKER) $@ $(LFLAGS) $(OBJECTS)
 
 $(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.c
+	$(create_dir)
 	@$(CC) $(CFLAGS) -c $< -o $@
 
 $(TESTS): $(TESTOBJ) $(OBJECTS)
+	$(create_dir)
 	@$(LINKER) $@ $(LFLAGS) $(TESTOBJ) $(TESTDEPS)
 
 $(TESTOBJ): $(OBJDIR)/%.o : $(TESTDIR)/%.c
+	$(create_dir)
 	@$(CC) $(CFLAGS) -c $< -o $@
 
 tests: $(TESTS) $(TESTOBJ)
