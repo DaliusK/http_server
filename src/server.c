@@ -145,7 +145,7 @@ void send_directory_listing(FILE *f, struct stat statbuf, char* relative_path, c
 
         stat(pathbuf, &statbuf);
         tm = gmtime(&statbuf.st_mtime);
-        strftime(timebuf, sizeof(timebuf), "%Y-%b-%d %H-%M-%S", tm);
+        strftime(timebuf, sizeof(timebuf), "%Y-%b-%d %H:%M:%S", tm);
 
         fprintf(f, "<tr>");
         if (strcmp(de->d_name, ".") == 0)
