@@ -189,15 +189,17 @@ int process_request(FILE *f, char *root)
     //strtok - tokenizer strtok(NULL, " ") - takes another token
     method = strtok(buf, " ");
     relative_path = strtok(NULL, " ");
-    char *path = calloc(strlen(root) + strlen(relative_path) + 1, sizeof(char));
-    
-    memmove(path, root, strlen(root));
-    path[strlen(root) + 1] = '\0';
-    strcat(path, relative_path);
     protocol = strtok(NULL, "\r");
     
     if (!method || !relative_path || !protocol)
         return -1;
+
+    //moved after checking the relative path
+    char *path = calloc(strlen(root) + strlen(relative_path) + 1, sizeof(char));
+
+    memmove(path, root, strlen(root));
+    path[strlen(root) + 1] = '\0';
+    strcat(path, relative_path);
 
     fseek(f, 0, SEEK_CUR); //change stream direction
 
