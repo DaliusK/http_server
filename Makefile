@@ -42,7 +42,7 @@ $(TESTOBJ): $(TESTDIR)/%.o : $(TESTDIR)/%.c
 	@$(CC) $(CFLAGS) -c $< -o $@
 
 tests: $(TESTS) $(TESTOBJ)
-	for test in $(TESTS); \
+	@for test in $(TESTS); \
 	do \
 		./$$test; \
 	done
