@@ -48,3 +48,4 @@ sftp-config.json
 *.x86_64
 *.hex
 bin/*
+tests/*.test
