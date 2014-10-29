@@ -307,6 +307,7 @@ static char * test_process_request_index_found()
 
 static char * all_tests()
 {
+    printf("===== TEST SERVER =====\n");
     mu_run_test(test_process_request_not_found);
     mu_run_test(test_process_request_bad_method);
     mu_run_test(test_process_request_invalid_request);
