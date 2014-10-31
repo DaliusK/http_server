@@ -1,4 +1,5 @@
 #include "server.h"
+#include "logger.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,13 +41,13 @@ int main(int argc, char *argv[])
 
     if (bind(sock, (struct sockaddr * ) &sin, sizeof(sin)) != 0)
     {
-        printf("Failed to bind to socket\n");
+        log_error("Failed to bind to socket");
         return 1;
     }
 
 
     listen(sock, 5);
-    printf("HTTP server listening on port %d\n", port);
+    log_info("HTTP server listening on port %d", port);
     char *root = get_root();
     int loop_result = loop(sock, root);
     while (loop_result != 1)

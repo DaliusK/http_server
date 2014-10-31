@@ -1,5 +1,6 @@
 #include "server.h"
 #include "helper.h"
+#include "logger.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -112,7 +113,7 @@ char* get_root()
     int index = lastIndexOf(buf, "/");
     substr(root, bufsize, buf, index);
     strcat(root, "/html");
-    printf("Setting root: %s\n", root);
+    log_info("Setting root: %s", root);
     free(buf);
     return root;
 }
@@ -170,6 +171,56 @@ void send_directory_listing(FILE *f, struct stat statbuf, char* relative_path, c
     fprintf(f, "</body></html>");
 }
 
+int process_get_request(FILE *f, char *path, char* relative_path)
+{
+    struct stat statbuf;
+    char pathbuf[4096];
+    int len;
+
+    /* Check if path exists */
+    if (stat(path, &statbuf) >= 0)
+    {
+        /* Check if it is a directory*/
+        if (S_ISDIR(statbuf.st_mode))
+        {
+            len = strlen(path);
+            /* Check for directory compliance */
+
+            if (len == 0 || path[len - 1] != '/')
+            {
+                /* HTTP 302 requires a Location in headers to be sent back */
+                snprintf(pathbuf, sizeof(pathbuf), "Location: %s/", relative_path);
+                log_debug("HTTP 302, %s", pathbuf);
+                send_response(f, 302, "Found", pathbuf, "Directories must end with a slash.");
+            }
+            else
+            {
+                /* Show index.html or directory listing on directory request*/
+                snprintf(pathbuf, sizeof(pathbuf), "%sindex.html", path);
+                
+                /* If it's a file, send it, else list the contents of dir */
+                if (stat(pathbuf, &statbuf) >= 0)
+                {
+                    send_file(f, pathbuf, &statbuf);
+                }
+                else
+                {
+                    send_directory_listing(f, statbuf, relative_path, path);
+                }
+            }
+        }
+        else
+        {
+            send_file(f, path, &statbuf);
+        }
+    }
+    else
+    {
+        send_response(f, 404, "Not found", NULL, "File not found");
+    }
+    return 0;
+}
+
 int process_request(FILE *f, char *root)
 {
     //TODO: divide into subfunctions
@@ -178,13 +229,11 @@ int process_request(FILE *f, char *root)
     
     char *relative_path;
     char *protocol;
-    struct stat statbuf;
-    char pathbuf[4096];
-    int len;
 
     if (!fgets(buf, sizeof(buf), f))
         return -1;
-    printf("%s\n", buf);
+
+    log_info("%s", buf);
 
     //strtok - tokenizer strtok(NULL, " ") - takes another token
     method = strtok(buf, " ");
@@ -203,54 +252,15 @@ int process_request(FILE *f, char *root)
 
     fseek(f, 0, SEEK_CUR); //change stream direction
 
-
     if (strcasecmp(method, "GET") == 0)
     {
-        /* Check if path exists */
-        if (stat(path, &statbuf) >= 0)
-        {
-            /* Check if it is a directory*/
-            if (S_ISDIR(statbuf.st_mode))
-            {
-                len = strlen(path);
-
-                /* Check for directory compliance */
-                if (len == 0 || path[len - 1] != '/')
-                {
-                    //HTTP 302 requires a Location in headers to be sent back
-                    snprintf(pathbuf, sizeof(pathbuf), "Location: %s/", relative_path);
-                    printf("HTTP 302, %s\n", pathbuf);
-                    send_response(f, 302, "Found", pathbuf, "Directories must end with a slash.");
-                }
-                else
-                {
-                    /* Show index.html or directory listing on directory request*/
-                    snprintf(pathbuf, sizeof(pathbuf), "%sindex.html", path);
-                    
-                    if (stat(pathbuf, &statbuf) >= 0)
-                    {
-                        send_file(f, pathbuf, &statbuf);
-                    }
-                    else
-                    {
-                        send_directory_listing(f, statbuf, relative_path, path);
-                    }
-                }
-            }
-            else
-            {
-                send_file(f, path, &statbuf);
-            }
-        }
-        else
-        {
-            send_response(f, 404, "Not found", NULL, "File not found");
-        }
+        process_get_request(f, path, relative_path);
     }
     else
     {
         send_response(f, 501, "Not supported", NULL, "Method is not supported");
     }
+
     free(path);
     return 0;
 }
@@ -267,8 +277,8 @@ int loop(int sock, char* root)
     if (s < 0)
         return 1;
 
-    printf("%s: ", inet_ntoa(client.sin_addr));
     f = fdopen(s, "a+");
+    log_info(inet_ntoa(client.sin_addr));
     process_request(f, root);
     fclose(f);
     return 0;
