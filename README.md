@@ -15,3 +15,11 @@ For operating system dependencies check [OS_DEPS.md](OS_DEPS.md)
  - GET - simple, without additional querystring
 
 On finishing querystring, there should be simply open doors for POST method also
+===========
+### Usage ###
+
+Compile the files by `make`
+
+To run tests type `make tests`
+
+A "patch" for server randomly crashing (and me lacking time to investigate), add a crontab for running `runner.sh` every now and then
