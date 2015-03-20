@@ -111,7 +111,7 @@ char* get_root()
     get_exec_path(buf, bufsize);
     int index = lastIndexOf(buf, "/");
     substr(root, bufsize, buf, index);
-    strcat(root, "/html");
+    strcat(root, "/../../../html");
     printf("Setting root: %s\n", root);
     free(buf);
     return root;
