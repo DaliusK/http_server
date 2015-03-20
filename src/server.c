@@ -162,7 +162,7 @@ void send_directory_listing(FILE *f, struct stat statbuf, char* relative_path, c
         if (S_ISDIR(statbuf.st_mode))
             fprintf(f, "<td>%s</td>", timebuf);
         else
-            fprintf(f, "<td>%s</td> <td>%10zu</td>", timebuf, statbuf.st_size);
+            fprintf(f, "<td>%s</td> <td>%10llu</td>", timebuf, (unsigned long long)statbuf.st_size);
         fprintf(f, "</tr>");
         free(pathbuf);
     }
