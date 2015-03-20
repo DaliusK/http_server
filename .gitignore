@@ -49,3 +49,4 @@ sftp-config.json
 *.hex
 bin/*
 logs/*
+tests/*.test

@@ -17,10 +17,10 @@ INCLUDES := $(wildcard $(SRCDIR)/*.h)
 OBJECTS  := $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
 
 TESTSRC  := $(wildcard $(TESTDIR)/*.c)
-TESTOBJ  := $(TESTSRC:$(TESTDIR)/%.c=$(OBJDIR)/%.o)
+TESTOBJ  := $(TESTSRC:$(TESTDIR)/%.c=$(TESTDIR)/%.o)
 #remove an object that already has a main method
 TESTDEPS := $(filter-out obj/main.o, $(OBJECTS))
-TESTS    := $(TESTSRC:$(TESTDIR)/%.c=$(BINDIR)/%.test)
+TESTS    := $(TESTSRC:$(TESTDIR)/%.c=$(TESTDIR)/%.test)
 rm        = rm -f
 create_dir=@mkdir -p $(@D)
 
@@ -34,14 +34,18 @@ $(OBJECTS): $(OBJDIR)/%.o : $(SRCDIR)/%.c
 
 $(TESTS): $(TESTOBJ) $(OBJECTS)
 	$(create_dir)
-	@$(LINKER) $@ $(LFLAGS) $(TESTOBJ) $(TESTDEPS)
+#the patsubst part is pretty hacky
+	@$(LINKER) $@ $(LFLAGS) $(patsubst %.test, %.o, $@) $(TESTDEPS)
 
-$(TESTOBJ): $(OBJDIR)/%.o : $(TESTDIR)/%.c
+$(TESTOBJ): $(TESTDIR)/%.o : $(TESTDIR)/%.c
 	$(create_dir)
 	@$(CC) $(CFLAGS) -c $< -o $@
 
 tests: $(TESTS) $(TESTOBJ)
-	./$(TESTS)
+	@for test in $(TESTS); \
+	do \
+		./$$test; \
+	done
 
 .PHONEY: clean
 clean:

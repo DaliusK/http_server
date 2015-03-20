@@ -1,4 +1,5 @@
 #include "helper.h"
+#include "logger.h"
 #include <stdlib.h>
 #include <ctype.h>
 #include <stdio.h>
@@ -53,10 +54,9 @@ OS get_os()
 void get_exec_path(char *buf, int bufsize)
 {
     //guided by http://stackoverflow.com/a/933996/552214
-    printf("Get executable's path\n");
     
     readlink("/proc/self/exe", buf, bufsize);
-    printf("\tPath: %s\n", buf);
+    log_debug("Exec path: %s", buf);
 }
 
 void substr(char *buffer, size_t buflen, char const *source, int len)
