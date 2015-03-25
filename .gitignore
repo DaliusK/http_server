@@ -48,5 +48,5 @@ sftp-config.json
 *.x86_64
 *.hex
 bin/*
-logs/*
+logs/*.log
 tests/*.test
