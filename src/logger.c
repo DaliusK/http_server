@@ -15,7 +15,8 @@ void log_format(const char* tag, const char* message, va_list args)
     strftime(date, 20, "%Y-%m-%d %H:%M:%S", localtime(&curr_time));
     printf("%s [%s] ", date, tag);
     vprintf(message, args);
-    printf("\n");
+    if (message[strlen(message) - 1] != '\n')
+        printf("\n");
     free(date);
 }
 
